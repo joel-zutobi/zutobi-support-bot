@@ -40,7 +40,7 @@ Set-Location '.\Zutobi Support'
 .\scripts\setup.ps1
 ```
 
-The setup script validates the source and builds `dist/zutobi-support.skill`. The account owner must separately connect Google's remote Gmail MCP server to Claude and authorize Gmail access. Follow the runbook linked below. An agent working in this repository should read `CLAUDE.md` and the runbook before changing or installing the integration.
+The setup script validates the source and builds `dist/zutobi-support.skill`. The account owner must separately connect Google's remote Gmail MCP server to Claude and authorize Gmail access. Follow the runbook linked below. An agent working in this repository should read `AGENTS.md` and the runbook before changing or installing the integration. Claude Code reads `CLAUDE.md`, which points to the shared agent guidance.
 
 ## Set up Gmail
 
