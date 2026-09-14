@@ -1,21 +1,21 @@
 ---
 name: zutobi-support
-description: Draft replies to Zutobi customer support emails in Zutobi's established voice. Use when processing the support@zutobi.com Gmail inbox - the skill categorizes incoming messages (refund requests, cancellation help, "unauthorized" charges, account-not-found, technical issues, feedback, spam) and uses the matching canonical reply template. Never volunteers refunds - defaults to asking the customer to confirm cancellation and pauses to ask the operator before offering any refund. Always produces drafts via create_draft; never auto-sends. Trigger any time the user says "process support inbox", "draft replies for support", "handle the support email", forwards or pastes a support thread, or asks for help answering a customer message at support@zutobi.com.
+description: Classify messages and draft replies for the support@zutobi.com Gmail inbox. Use for support-inbox processing, reply drafting, or answering a pasted Zutobi customer thread. Handles billing, cancellation, account, technical, feedback, and spam categories with operator approval for any refund offer.
 ---
 
 # Zutobi Customer Support
 
-Zutobi is a driving-permit/drivers-ed study app on iOS, Android, and web. The support inbox is `support@zutobi.com`. Volume is heavy and concentrated in a small number of categories - most replies are short and use one of the canonical templates below.
+Zutobi is a driving-permit and drivers-ed study app on iOS, Android, and web. The support inbox is `support@zutobi.com`. Most replies are short and use one of the canonical templates below.
 
 ## Operating rules
 
-- **Drafts only.** Always use `create_draft` on the thread. Never send.
-- **One draft per thread.** If the thread already has a draft, skip it (check `list_drafts`).
+- **Drafts only.** In draft mode, use `draft_email`. Sending is outside this skill's authority. Do not call `send_email` or `reply_all`.
+- **One draft per thread.** After `get_thread`, inspect every message's `labelIds`. If any message has the `DRAFT` label, skip the thread.
 - **Never volunteer refunds.** Default behavior is to ask the customer to confirm their subscription is canceled. Do NOT include refund links, refund language, or hints that a refund is possible ("we generally do not refund", "unused time", "you may request a refund", etc.) in drafts by default. Zutobi has not done anything wrong - the subscription renewed because it was not canceled.
-- **Ask the operator before offering a refund.** When a customer is explicitly asking for a refund (refund keywords in §1, §2, §3, §7), first ask the operator in Cowork chat: "Customer [name] is requesting a refund. Default draft asks them to confirm cancellation only. Offer refund instead? (yes/no)" Only if the operator says yes, switch to the refund-offered templates in §Refund-offered templates. Otherwise use the default cancel-only template.
+- **Ask the operator before offering a refund.** When a customer is explicitly asking for a refund in categories 1, 2, 3, or 7, ask in the current chat: "Customer [name] is requesting a refund. Default draft asks them to confirm cancellation only. Offer refund instead? (yes/no)" Only an explicit yes authorizes the refund-offered templates. Otherwise use the category's default template.
 - **Never claim to be state-approved.** Zutobi is a study aid, not a state-approved course.
 - **Do not share details of one account with another customer**, even family members.
-- **Match the customer's language.** If they wrote in Swedish, reply in Swedish (see §Swedish). Any other non-English language → flag for human review, do not draft.
+- **Match the customer's language.** If they wrote in Swedish, reply in Swedish using the Swedish rules below. Flag any other non-English message for human review without drafting.
 - **Flag for human review (do not draft) when any of these appear:**
   - Legal threats: "sue", "class action", "attorney", "fraud dispute"
   - Parent emailing about a minor's account (often sensitive - review)
@@ -33,7 +33,7 @@ Zutobi is a driving-permit/drivers-ed study app on iOS, Android, and web. The su
 - Calm and direct. Don't over-apologize. Don't gush.
 - Sign-off: `Best regards,` then a newline, then `Joel` (default agent). Alternate: `Anna`. Pick one and stay consistent within a thread - if the customer has been corresponding with Anna, keep signing as Anna.
 - Do not invent names or agent identities other than Joel or Anna.
-- **Punctuation: never use em dashes (—).** Use a hyphen (-) or an en dash (–) instead. This applies to every draft and to anything written inside this skill.
+- **Punctuation:** use periods or commas instead of em dashes in every draft.
 
 ## Reference links (use verbatim)
 
@@ -44,24 +44,31 @@ Zutobi is a driving-permit/drivers-ed study app on iOS, Android, and web. The su
 
 ## Refund policy
 
-Default is **no refund**, and the skill never volunteers a refund. The operator (Joel / Anna) decides per-case whether a refund is appropriate. If the operator explicitly approves a refund in chat, switch to the templates in §Refund-offered templates.
+Default is **no refund**, and the skill never volunteers a refund. The operator decides whether a refund is appropriate for each thread. Explicit approval in the current chat unlocks the refund-offered templates for that thread only.
 
 Cases where the operator might approve a refund (but this is their call, not the skill's):
 - Customer provides a screenshot/receipt showing cancellation BEFORE the disputed charge date, AND the email on the account matches.
 - Clear system error on our side (double-charge, charge after successful cancel confirmation).
 - Persistent escalation with documented evidence after multiple rounds.
 
-For iOS or Google Play purchases, Zutobi **cannot** issue refunds directly - those are handled by Apple / Google. The skill still does not volunteer this information unless the operator asks it to; see §Refund-offered templates.
+For iOS or Google Play purchases, Zutobi **cannot** issue refunds directly. Apple or Google handles them. Do not volunteer this information unless the operator approves a refund response.
+
+## Run modes
+
+- Use **classify-only mode** when the operator asks for a dry run, preview, or classification. Read and classify messages, then show the category and exact template that would be used. Do not call `draft_email`.
+- Use **draft mode** only when the operator explicitly asks to create or write Gmail drafts. A request such as "process the inbox" without mention of drafts uses classify-only mode.
 
 ## Inbox processing workflow
 
-1. `search_threads` with query `is:unread in:inbox` to get unread messages.
-2. For each thread, if there's no existing draft, call `get_thread` with `messageFormat: FULL_CONTENT`.
-3. Classify into one of the categories below.
-4. **If the category is a refund category (§1, §2, §3, §7)**, pause before drafting and ask the operator in Cowork chat: "Customer {name} is asking for a refund on thread {subject}. Default is a cancel-only reply. Offer a refund instead? (yes/no)" Do not create the draft until the operator answers. If yes, use the matching §Refund-offered template; if no, use the default template in the category.
-5. Render the chosen template, substituting first name and specifics.
-6. Call `create_draft` with the customer as `to`, the reply text as `body`, keeping the original subject (prefix `Re:` if the first message had no `Re:`).
-7. Report a summary: `Drafted [N] replies across categories {refund: x, cancel-howto: y, ...}. Flagged [M] for human review: [list with reasons]. Awaited operator decision on [K] refund threads.`
+1. Call `list_inbox_threads` with `query: "is:unread in:inbox"` and `maxResults: 50`.
+2. For each returned thread ID, call `get_thread` with `format: "full"`.
+3. Inspect `labelIds` on every message. Skip the thread if any message has the `DRAFT` label.
+4. Classify the full conversation into one category below. The newest customer message controls the category, but use earlier messages to detect prior denials, prior cancellation claims, and agent identity.
+5. In classify-only mode, report the category, reason, and rendered template without writing to Gmail.
+6. In draft mode, pause on categories 1, 2, 3, and 7. Ask: "Customer {name} is asking for a refund on thread {subject}. Default is a cancel-only reply. Offer a refund instead? (yes/no)" Create no draft until the operator answers.
+7. Render the approved template. Check that it contains no em dash and discloses no other account's details.
+8. Call `draft_email` with `to` set to an array containing the latest customer's email address, `subject` set to the original subject with `Re:` added only when absent, `body` set to the plain-text reply, and `threadId` set to the fetched thread ID. Omit `cc`, `bcc`, and attachments unless the operator explicitly supplies them.
+9. Report drafted, skipped, flagged, and pending-approval counts by category. If 50 threads were returned, say that the run may have reached the server's result limit.
 
 ## Categories and templates
 
@@ -71,7 +78,7 @@ Replace `{name}` with the sender's first name. If the name is unknown, drop the 
 
 Trigger: "I got charged after my trial", "please refund", "I didn't mean to subscribe". No screenshot of cancellation attached.
 
-**Before drafting:** ask the operator in Cowork chat whether to offer a refund for this specific thread. If no (the default), use the template below. If yes, switch to §Refund-offered templates → "First-ask, refund approved".
+**Before drafting:** ask the operator whether to offer a refund for this thread. If no, use the default template below. If yes, use the matching purchase route under Refund-offered templates.
 
 Default template (no refund offered):
 ```
@@ -168,7 +175,7 @@ Joel
 
 Trigger: "I didn't sign up", "these charges are unauthorized", "no one in my household signed up".
 
-**Before drafting:** ask the operator whether to offer refund information for this thread. Default is below (no refund language). If the operator says yes, switch to §Refund-offered templates → "Unauthorized charges, refund approved".
+**Before drafting:** ask the operator whether to offer refund information for this thread. If no, use the default template below. If yes, use the matching purchase route under Refund-offered templates.
 
 Default template (no refund links):
 ```
@@ -295,4 +302,53 @@ Skip (no draft) for any of these:
 - Password reset confirmations from our own system (`hello@tra-zutobi.com`) - unless customer has replied with a question
 - Stripe receipts (`receipts+...@stripe.com`)
 
-Flag
+## Swedish replies
+
+For a Swedish customer, translate the selected template into natural Swedish after classification. Use `Hej {name},` or `Hej,` and sign with `Vänliga hälsningar,` followed by the same agent name already used in the thread. Keep URLs unchanged. Preserve every policy decision in the English template, especially refund and account-privacy limits.
+
+## Refund-offered templates
+
+These templates are locked until the operator explicitly approves a refund offer for the current thread. Determine the purchase route from the conversation or ask the operator. Do not guess. These drafts offer the approved route but do not claim that a refund has already been processed.
+
+### Website purchase
+
+```
+Hi {name},
+
+We can make an exception and offer a refund for the most recent payment. Please first make sure the subscription is canceled, then reply to confirm. This article walks through the cancellation steps:
+https://zutobi.com/us/faq/managing-my-subscription-trial-and-billing
+
+Once you confirm, we'll take care of the refund.
+
+Best regards,
+Joel
+```
+
+### Apple App Store purchase
+
+```
+Hi {name},
+
+Apple handles payments and refunds for subscriptions purchased through the App Store. You can submit the refund request directly to Apple here:
+https://support.apple.com/en-us/HT204084
+
+Please also make sure the subscription is canceled so there are no further charges:
+https://support.apple.com/en-us/HT202039
+
+Best regards,
+Joel
+```
+
+### Google Play purchase
+
+```
+Hi {name},
+
+Google handles payments and refunds for subscriptions purchased through Google Play. You can follow Google's refund and cancellation steps here:
+https://support.google.com/googleplay/answer/7205930
+
+Best regards,
+Joel
+```
+
+If the thread alleges an unauthorized charge and the account has not been found, collect the receipt or bank descriptor with the default category 7 template first. Do not promise a refund before the purchase route and account are identified.

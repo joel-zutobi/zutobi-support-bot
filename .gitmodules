@@ -1,0 +1,3 @@
+[submodule "vendor/gmail-mcp-server"]
+	path = vendor/gmail-mcp-server
+	url = https://github.com/ArtyMcLabin/Gmail-MCP-Server.git
