@@ -24,8 +24,8 @@ The Gmail tools expose email content, not Zutobi's account or billing systems.
 
 ## Safety rules
 
-- **Drafts only.** In draft mode, call `draft_email`. Sending, deleting, and modifying Gmail messages or threads are outside this skill's authority. Do not call `send_email`, `reply_all`, or Gmail delete and modify tools.
-- **One draft per thread.** After `get_thread`, inspect every message's `labelIds`. Skip the thread if any message has the `DRAFT` label.
+- **Drafts only.** In draft mode, call `create_draft`. Sending, deleting, and modifying Gmail messages or threads are outside this skill's authority. If another connector exposes sending or destructive Gmail tools, leave them unused.
+- **One draft per thread.** Collect existing draft thread IDs with `list_drafts`. Immediately before drafting, also inspect every message returned by `get_thread`. Skip the thread if its ID belongs to an existing draft or any message has the `DRAFT` label.
 - **Refund gate.** Categories 1, 2, 3, and 7 require a separate operator decision for each thread before refund language appears in a draft. Default to the ordinary template, which does not offer a refund. Approval applies only to the named thread.
 - **Language.** Reply in English or Swedish. Translate the selected template into natural Swedish when the customer writes in Swedish. Flag other languages for human review.
 - **Signature.** Sign every reply `Best regards,` followed by `Joel`. For Swedish, use `Vänliga hälsningar,` followed by `Joel`.
@@ -45,17 +45,19 @@ Flag for human review without drafting when the thread contains:
 
 ## Inbox workflow
 
-1. Call `list_inbox_threads` with `query: "is:unread in:inbox"` and `maxResults: 50`. If 50 threads are returned, report that the server may have reached its result limit.
-2. For each thread ID, call `get_thread` with `format: "full"`.
-3. Skip any thread containing a message whose `labelIds` include `DRAFT`.
-4. Read the conversation oldest first. Classify from the newest customer request while using earlier messages to detect prior denials, evidence, and verified system facts.
-5. Apply the human-review rules and fact requirements before selecting a template.
-6. Classify the thread with the category table below.
-7. For classify-only mode, read [references/templates.md](references/templates.md), render the ordinary template, and report the result without calling `draft_email`. For a refund category, note that draft mode would require the refund gate.
-8. For draft mode, read [references/templates.md](references/templates.md) after classification. If the refund gate applies, ask: "Customer {name} is asking for a refund on thread {subject}. The default reply does not offer one. Offer a refund instead? (yes/no)" Use the ordinary template for no. Only after yes, read [references/refunds.md](references/refunds.md) and follow its purchase-route checks.
-9. Render the selected template as plain text. Verify the recipient, facts, language, privacy, signature, links, and punctuation against this file.
-10. Call `draft_email` with `to` set to an array containing the newest external customer's email, `subject` set to the original subject with `Re:` added only when absent, `body` set to the reply, and `threadId` set to the fetched thread ID. Omit `cc`, `bcc`, and attachments unless the operator explicitly supplies them.
-11. Report drafted, skipped, flagged, and pending-approval counts by category. Name the reason for every skipped or flagged thread. The run is complete only when every fetched thread appears in one of those counts.
+1. Call `search_threads` with `query: "is:unread in:inbox"` and `pageSize: 50`. If 50 threads are returned, report that the server may have reached its result limit.
+2. Call `list_drafts` with `pageSize: 50` and `view: "DRAFT_VIEW_METADATA_ONLY"`. Follow every `nextPageToken` until the response has no token. Collect the returned `threadId` values without loading draft bodies.
+3. Skip any candidate whose thread ID appears in the collected draft thread IDs.
+4. For each remaining thread ID, call `get_thread` with `messageFormat: "FULL_CONTENT"`.
+5. Skip any thread containing a message whose `labelIds` include `DRAFT`. This second check protects against a draft created after step 2.
+6. Read the conversation oldest first. Classify from the newest customer request while using earlier messages to detect prior denials, evidence, and verified system facts.
+7. Apply the human-review rules and fact requirements before selecting a template.
+8. Classify the thread with the category table below.
+9. For classify-only mode, read [references/templates.md](references/templates.md), render the ordinary template, and report the result without calling `create_draft`. For a refund category, note that draft mode would require the refund gate.
+10. For draft mode, read [references/templates.md](references/templates.md) after classification. If the refund gate applies, ask: "Customer {name} is asking for a refund on thread {subject}. The default reply does not offer one. Offer a refund instead? (yes/no)" Use the ordinary template for no. Only after yes, read [references/refunds.md](references/refunds.md) and follow its purchase-route checks.
+11. Render the selected template as plain text. Verify the recipient, facts, language, privacy, signature, links, and punctuation against this file.
+12. Call `create_draft` with `replyToMessageId` set to the newest external customer's message ID, `to` set to an array containing that customer's email, `subject` set to the original subject with `Re:` added only when absent, and `body` set to the reply. Omit `cc`, `bcc`, `htmlBody`, and attachments unless the operator explicitly supplies them.
+13. Report drafted, skipped, flagged, and pending-approval counts by category. Name the reason for every skipped or flagged thread. The run is complete only when every fetched thread appears in one of those counts.
 
 ## Category table
 

@@ -1,92 +1,98 @@
 # Gmail MCP setup and rollout
 
-This repository pins the Gmail MCP server as a Git submodule under `vendor/gmail-mcp-server`. The skill export does not embed or start the server.
+This project uses Google's hosted Gmail MCP server at `https://gmailmcp.googleapis.com/mcp/v1`. The skill export contains support policy and templates. It does not contain credentials or Gmail server code.
 
-Install Git, PowerShell 5.1 or later, and a supported Node.js LTS release before starting. The pinned server declares Node.js 14 or later, but a current LTS release is the safer choice.
+Google currently marks the Gmail MCP server as Developer Preview. Check Google's current documentation before enabling it for another account.
 
-## 1. Clone and build
+## 1. Build the skill
 
-After this repository has a remote, clone it with its pinned dependency:
+Clone the repository and run the local setup:
 
 ```powershell
-git clone --recurse-submodules <repository-url>
+git clone <repository-url>
 Set-Location '.\Zutobi Support'
 .\scripts\setup.ps1
 ```
 
-For an existing checkout, initialize missing submodules and run setup:
+For this existing checkout, run only:
 
 ```powershell
-git submodule update --init --recursive
 .\scripts\setup.ps1
 ```
 
-The setup script runs `npm ci` and `npm run build` inside the pinned server checkout, then removes development packages. It also builds `dist/zutobi-support.skill` and writes `dist/claude-desktop-mcp.json` with the correct absolute server path for that computer.
+This validates the skill and writes `dist/zutobi-support.skill`. It does not contact Google or Claude.
 
-## 2. Prepare Google OAuth
+## 2. Prepare the Google Cloud project
 
-1. Create or select a Google Cloud project.
-2. Enable the Gmail API for that project.
-3. Configure the OAuth consent screen for the account that owns `support@zutobi.com`.
-4. Create an OAuth client with application type **Desktop app**.
-5. Download the client JSON and save it as `%USERPROFILE%\.gmail-mcp\gcp-oauth.keys.json`.
+Use a Google Cloud project owned by Zutobi. Do not place OAuth client secrets in this repository.
 
-Keep both `gcp-oauth.keys.json` and `credentials.json` out of Git.
+1. Join the Google Workspace Developer Preview if the account or organization is not already enrolled.
+2. Create or select the Google Cloud project that will own the integration.
+3. Enable the Gmail API for that project.
+4. Open **Google Auth Platform** and configure Branding and Audience.
+5. Under Data Access, add these scopes:
+   - `https://www.googleapis.com/auth/gmail.readonly`
+   - `https://www.googleapis.com/auth/gmail.compose`
+6. If the app uses External testing, add the Gmail account that will authorize access as a test user.
 
-## 3. Authorize a read-only dry run
+Use Internal audience when the Cloud project belongs to the Zutobi Google Workspace organization and only Zutobi users need the connector. Otherwise follow Google's verification and testing requirements.
 
-Start with read-only access. This exposes the thread-reading tools but cannot create drafts or send mail.
+## 3. Create the OAuth client
 
-```powershell
-node .\vendor\gmail-mcp-server\dist\index.js auth --scopes=gmail.readonly
-```
+Create an OAuth 2.0 client in **Google Auth Platform**, **Clients**:
 
-The command opens a browser for Google sign-in and then exits. A successful flow writes `%USERPROFILE%\.gmail-mcp\credentials.json`.
+1. Choose **Web application**. The official remote MCP does not use a Desktop app client.
+2. Name it `Claude Gmail MCP`.
+3. Add this exact authorized redirect URI:
 
-The repository's `start.bat` uses the server's default scopes when no credentials exist. Those defaults include `gmail.settings.basic`, which this skill does not need. Use the explicit command above instead.
+   `https://claude.ai/api/mcp/auth_callback`
 
-## 4. Register the server in Claude Desktop
+4. Create the client and copy its Client ID and Client Secret to a password manager.
 
-Open `dist/claude-desktop-mcp.json`, which contains the absolute server path for this checkout. Then open **Settings**, **Developer**, and **Edit Config** in Claude Desktop. Merge the generated `gmail` entry into `mcpServers` without removing existing entries.
+Creating the client generates persistent access credentials. Review the project, audience, and redirect URI before pressing **Create**.
 
-Restart Claude Desktop. Confirm that `list_inbox_threads` and `get_thread` appear. With read-only authorization, `draft_email` should not appear.
+## 4. Add the remote connector to Claude
+
+Claude Pro, Max, Team, or Enterprise is required for a custom connector.
+
+1. In Claude or Claude Desktop, open **Settings**, then **Connectors**.
+2. Choose **Add custom connector**.
+3. Use `Zutobi Gmail` as the server name.
+4. Use `https://gmailmcp.googleapis.com/mcp/v1` as the remote MCP server URL.
+5. Open Advanced settings and enter the OAuth Client ID and Client Secret.
+6. Add the connector, then authenticate the `support@zutobi.com` Gmail account.
+
+The connector must expose `search_threads`, `get_thread`, `list_drafts`, and `create_draft`. Google's documented Gmail MCP tool set has no send-email tool.
 
 ## 5. Install the skill
 
-Build `dist/zutobi-support.skill` with `scripts/package.ps1`. Install that export through the skill import UI used by the target Claude account. Confirm that the installed skill description begins with "Classify messages and draft replies".
-
-Importing a `.skill` file is separate from registering the Gmail MCP server. Both must be present in the same client session.
+In Claude, open **Customize**, then **Skills**. Upload `dist/zutobi-support.skill` and enable it. Importing the skill is separate from adding the Gmail connector. Both must be available in the same Claude conversation.
 
 ## 6. Run the classification dry run
 
-Ask the skill to classify a small batch of unread support threads without drafting. Review these fields for every thread:
+Start with this prompt:
 
-- thread subject and sender
-- chosen category and reason
-- exact rendered reply it would use
-- duplicate-draft decision
-- refund approval or human-review flag
+```text
+Use the zutobi-support skill in classify-only mode.
 
-Do not continue if the tool reports exactly 50 threads without acknowledging that it may have reached the server result limit. Fix misclassifications in the skill and repeat the dry run.
+Review the unread support inbox threads, up to the configured limit of 50. Do not create drafts and do not make any Gmail changes.
 
-## 7. Enable draft creation
-
-Reauthorize with the narrowest scope that supports this server's read and draft tools:
-
-```powershell
-node .\vendor\gmail-mcp-server\dist\index.js auth --scopes=gmail.modify
+For every thread, report the subject, category, classification reason, missing verified facts, whether it would be drafted, skipped, or sent for human review, and the exact reply it would use. Summarize the category counts at the end.
 ```
 
-Restart Claude Desktop and confirm `draft_email` now appears. This scope also enables send and delete tools. Gmail has no draft-only OAuth scope, so the skill instructions remain the enforcement boundary.
+Review every proposed reply. If the result contains exactly 50 threads, confirm that Claude reports the possible result limit. Correct classification mistakes before creating any drafts.
 
-Begin with categories 4, 5, and 6. Ask for Gmail drafts explicitly. Check each created draft in Gmail before expanding to other categories. Keep categories 1, 2, 3, and 7 behind per-thread operator approval.
+## 7. Test draft creation
 
-## 8. Optional server hardening
+Begin with one unambiguous cancellation thread in category 4, 5, or 6. Ask Claude to create a draft for that named thread. Open Gmail and check the recipient, thread association, wording, signature, and links. Keep categories 1, 2, 3, and 7 behind per-thread refund approval.
 
-For a stronger boundary, add a server mode that does not register `send_email`, `reply_all`, `delete_email`, or `batch_delete_emails`. Follow the Gmail server repository's `CLAUDE.md` and required pull-request security audit. This is a server change and is not implemented in this repository.
+The official MCP creates a reply draft by passing the latest customer message ID as `replyToMessageId`. The skill also checks `list_drafts` and the thread's `DRAFT` labels before writing.
 
-## Updating the pinned server
+## Portability
 
-The submodule currently pins commit `cdc3b9b3b7ab49dfac111024643ffb7b2492a418`. Update it deliberately, review the server's release and security changes, run its tests, and commit the new submodule pointer in this repository. A normal clone should never float to the latest server commit by itself.
+Another operator needs the repository, the packaged skill, access to the configured Claude connector, and permission to authenticate the intended Gmail account. Google hosts the MCP server, so the other computer needs no Node installation or server build.
 
-On 2026-09-14, `npm audit --omit=dev` reported 13 production dependency advisories at this commit, including five high-severity findings. The critical advisory in the full audit came from the development-only Vitest runner and is removed by the setup script after the build. Treat the remaining production findings as upgrade work before distributing this setup widely.
+Official references:
+
+- [Configure Google Workspace MCP servers](https://developers.google.com/workspace/guides/configure-mcp-servers)
+- [Gmail MCP server guide](https://developers.google.com/workspace/gmail/api/guides/configure-mcp-server)

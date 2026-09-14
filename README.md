@@ -6,9 +6,9 @@ The original April 2026 export is preserved in the first commit. The maintained 
 
 ## Safety model
 
-The skill creates drafts only. It skips any Gmail thread that already contains a message with the `DRAFT` label. Refund language requires an explicit operator decision for each thread.
+The skill creates drafts only. It uses both `list_drafts` and the `DRAFT` message label to skip threads that already have a draft. Refund language requires an explicit operator decision for each thread.
 
-Gmail does not offer an OAuth scope that permits drafts while forbidding sends. Use `gmail.readonly` for classification dry runs. Draft creation requires `gmail.modify` or `gmail.compose`, both of which also permit sending. The skill therefore treats `send_email` and `reply_all` as out of scope.
+The project targets Google's official remote Gmail MCP server. Its documented tool set can search and read threads, list drafts, and create drafts. It does not expose a send-email tool. Google still marks the server as Developer Preview, so review the setup before rolling it out to more accounts.
 
 ## Build the export
 
@@ -30,17 +30,17 @@ This packages the skill, checks its fixed safety rules, validates the anonymized
 
 ## Install on another computer
 
-The skill and Gmail server remain separate at runtime, but this repository pins the server as a Git submodule at `vendor/gmail-mcp-server`. Do not commit `node_modules`, built server output, OAuth keys, or Gmail credentials.
+The skill and Gmail connection remain separate at runtime. Google hosts the Gmail MCP server, so this repository does not bundle server code or Node dependencies.
 
-After cloning this repository with its submodules, run:
+After cloning this repository, run:
 
 ```powershell
+git clone <repository-url>
+Set-Location '.\Zutobi Support'
 .\scripts\setup.ps1
 ```
 
-The setup script installs the pinned server dependencies, builds the server, packages the skill, and writes a machine-specific MCP config snippet to `dist/claude-desktop-mcp.json`. OAuth still requires the Gmail account owner to create a Desktop OAuth client and approve access in a browser.
-
-The pinned April server revision builds and its 97 tests pass. An audit on 2026-09-14 found 13 production dependency advisories, including five high-severity findings. Review and update that dependency before a broad rollout. The setup script removes development packages after the build, which excludes the vulnerable test runner from the runtime install.
+The setup script validates the source and builds `dist/zutobi-support.skill`. The account owner must separately connect Google's remote Gmail MCP server to Claude and authorize Gmail access. Follow the runbook linked below. An agent working in this repository should read `CLAUDE.md` and the runbook before changing or installing the integration.
 
 ## Set up Gmail
 
@@ -53,9 +53,8 @@ skills/zutobi-support/SKILL.md  Maintained skill source
 skills/zutobi-support/references/  Ordinary and operator-approved templates
 scripts/package.ps1            Deterministic packager and safety checks
 scripts/validate.ps1           Structural checks for behavioral cases
-scripts/setup.ps1              Build the pinned Gmail server and local artifacts
-docs/setup-gmail-mcp.md        OAuth, server registration, and rollout runbook
+scripts/setup.ps1              Validate and package the skill
+docs/setup-gmail-mcp.md        Official Gmail MCP setup and rollout runbook
 tests/                          Anonymized forward-testing inputs and expectations
-vendor/gmail-mcp-server/        Pinned Git submodule, source only
 dist/                           Generated exports, ignored by Git
 ```

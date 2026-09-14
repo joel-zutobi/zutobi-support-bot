@@ -37,14 +37,14 @@ if ($allSkillText.Contains('lolwadream')) {
     throw 'Skill source contains the removed account-email example.'
 }
 
-$retiredToolNames = @('create_draft', 'list_drafts', 'search_threads', 'messageFormat')
+$retiredToolNames = @('list_inbox_threads', 'draft_email', 'maxResults')
 foreach ($toolName in $retiredToolNames) {
     if ($allSkillText.Contains($toolName)) {
         throw "Skill source contains retired Gmail tool name: $toolName"
     }
 }
 
-if (-not $skillText.Contains('maxResults: 50')) {
+if (-not $skillText.Contains('pageSize: 50')) {
     throw 'SKILL.md must keep the 50-thread inbox limit.'
 }
 
@@ -58,7 +58,7 @@ foreach ($reference in $requiredReferences) {
     }
 }
 
-$requiredToolNames = @('list_inbox_threads', 'get_thread', 'draft_email')
+$requiredToolNames = @('search_threads', 'get_thread', 'list_drafts', 'create_draft', 'messageFormat', 'replyToMessageId')
 foreach ($toolName in $requiredToolNames) {
     if (-not $skillText.Contains($toolName)) {
         throw "SKILL.md is missing Gmail tool name: $toolName"
