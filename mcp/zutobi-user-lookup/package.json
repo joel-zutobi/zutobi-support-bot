@@ -1,0 +1,27 @@
+{
+  "name": "@zutobi/user-lookup-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Read-only MCP server for Zutobi account and subscription lookup",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "zutobi-user-lookup-mcp": "dist/src/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/src/index.js",
+    "test": "npm run build && node --test dist/test/lookup.test.js dist/test/server.test.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.0.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "^2.0.0",
+    "@types/node": "^26.5.1",
+    "typescript": "^7.0.2"
+  }
+}
