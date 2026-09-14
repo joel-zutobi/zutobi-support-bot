@@ -105,6 +105,11 @@
     "expected": { "category": 11, "disposition": "draft", "language": "en" }
   },
   {
+    "id": "diagnostic-metadata-before-request",
+    "input": { "mode": "draft", "subject": "Zutobi/ios", "messages": ["App: 4.5.81\nPlatform: ios\nDevice: iPhone\nAccess: Premium\n\nPlease help me cancel my Apple subscription."] },
+    "expected": { "category": 5, "disposition": "draft", "language": "en", "note": "Read the complete body past diagnostic metadata before classifying." }
+  },
+  {
     "id": "system-noise",
     "input": { "mode": "draft", "subject": "Your Google data is ready", "messages": ["Your requested Google data export is available."], "sender": "noreply@google.com" },
     "expected": { "category": 16, "disposition": "skip", "language": "en" }

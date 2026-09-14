@@ -50,7 +50,7 @@ Flag for human review without drafting when the thread contains:
 3. Skip any candidate whose thread ID appears in the collected draft thread IDs.
 4. For each remaining thread ID, call `get_thread` with `messageFormat: "FULL_CONTENT"`.
 5. Skip any thread containing a message whose `labelIds` include `DRAFT`. This second check protects against a draft created after step 2.
-6. Read the conversation oldest first. Classify from the newest customer request while using earlier messages to detect prior denials, evidence, and verified system facts.
+6. Read every message in the thread in full, oldest first. For the newest customer message, continue past app, device, account, and other diagnostic metadata until the complete body has been read. Inbox snippets and metadata blocks are navigation aids only. Classify from the customer's complete request while using earlier messages to detect prior denials, evidence, and verified system facts.
 7. Apply the human-review rules and fact requirements before selecting a template.
 8. Classify the thread with the category table below.
 9. For classify-only mode, read [references/templates.md](references/templates.md), render the ordinary template, and report the result without calling `create_draft`. For a refund category, note that draft mode would require the refund gate.
@@ -77,7 +77,7 @@ Flag for human review without drafting when the thread contains:
 | 12 | Password reset follow-up | Joel or a trusted system message verifies that a reset code was sent. Missing verification means human review. |
 | 13 | State-approved question | Customer asks about course approval, completion credit, or certificates. |
 | 14 | Data export | Customer requests a copy or export of personal data. Human review. |
-| 15 | Feedback | Empty or unclear `Feedback/ios` or `Feedback/android` message. Skip. A concrete technical issue routes to category 11. |
+| 15 | Feedback | A `Feedback/ios` or `Feedback/android` message whose complete body contains no customer request after all diagnostic metadata. Skip. A concrete request routes to its matching category, and a concrete technical issue routes to category 11. |
 | 16 | Spam or system noise | TestFlight invitations, Google alerts or exports, unanswered Zutobi reset confirmations, and Stripe receipts. Skip. |
 
 ## Voice and links
