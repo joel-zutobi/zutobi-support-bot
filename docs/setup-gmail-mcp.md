@@ -28,7 +28,9 @@ Use a Google Cloud project owned by Zutobi. Do not place OAuth client secrets in
 
 1. Join the Google Workspace Developer Preview if the account or organization is not already enrolled.
 2. Create or select the Google Cloud project that will own the integration.
-3. Enable the Gmail API for that project.
+3. Enable both required services for that project:
+   - Gmail API, service name `gmail.googleapis.com`
+   - Gmail MCP API, service name `gmailmcp.googleapis.com`
 4. Open **Google Auth Platform** and configure Branding and Audience.
 5. Under Data Access, add these scopes:
    - `https://www.googleapis.com/auth/gmail.readonly`
