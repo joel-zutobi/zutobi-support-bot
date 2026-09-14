@@ -21,7 +21,7 @@
 
 - Run `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` after editing the skill or its behavioral cases.
 - Treat changes to tool names, Gmail mutation behavior, refund handling, identity matching, or customer data as safety-sensitive.
-- Work on a branch and use a pull request when this repository has a remote. Do not force-push shared branches.
+- Commit completed changes directly to `main` unless Joel asks for a review branch. Do not force-push shared branches.
 - Never commit OAuth keys, Gmail credentials, downloaded messages, or customer data.
 - Target Google's official remote Gmail MCP server at `https://gmailmcp.googleapis.com/mcp/v1`. Treat the previous community server as retired history.
 
@@ -38,3 +38,7 @@ Use the five default Matt Pocock triage labels. See `docs/agents/triage-labels.m
 ### Domain docs
 
 This is a single-context repository. See `docs/agents/domain.md`.
+
+### Billing integrations
+
+When adding or configuring a subscription provider MCP, CLI, or API, read `docs/setup-billing-integrations.md`.

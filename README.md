@@ -37,18 +37,22 @@ The skill and Gmail connection remain separate at runtime. Google hosts the Gmai
 After cloning this repository, run:
 
 ```powershell
-git clone <repository-url>
+git clone --recurse-submodules https://github.com/joel-zutobi/zutobi-support-bot.git 'Zutobi Support'
 Set-Location '.\Zutobi Support'
 .\scripts\setup.ps1
 ```
 
-The setup script validates the source and builds `dist/zutobi-support.skill`. The account owner must separately connect Google's remote Gmail MCP server to Claude and authorize Gmail access. Follow the runbook linked below. An agent working in this repository should read `AGENTS.md` and the runbook before changing or installing the integration. Claude Code reads `CLAUDE.md`, which points to the shared agent guidance.
+The setup script fetches any missing vendor submodules, validates the source, and builds `dist/zutobi-support.skill`. The account owner must separately connect Google's remote Gmail MCP server to Claude and authorize Gmail access. Follow the runbook linked below. An agent working in this repository should read `AGENTS.md` and the runbook before changing or installing the integration. Claude Code reads `CLAUDE.md`, which points to the shared agent guidance.
 
 The setup script also installs, builds, and tests the local user lookup MCP when Node.js is available. Its authentication token remains a separately provisioned secret.
 
 ## Set up Gmail
 
 Follow [docs/setup-gmail-mcp.md](docs/setup-gmail-mcp.md). Start with the read-only dry run before authorizing draft creation.
+
+## Set up billing lookups
+
+Follow [docs/setup-billing-integrations.md](docs/setup-billing-integrations.md). The downloaded vendor repositories are pinned references for inspecting source and setup instructions. Runtime connections use hosted MCP URLs or published packages.
 
 ## Repository layout
 
@@ -59,8 +63,10 @@ scripts/package.ps1            Deterministic packager and safety checks
 scripts/validate.ps1           Structural checks for behavioral cases
 scripts/setup.ps1              Validate and package the skill
 docs/setup-gmail-mcp.md        Official Gmail MCP setup and rollout runbook
+docs/setup-billing-integrations.md  Billing MCP and CLI choices
 docs/setup-zutobi-user-lookup-mcp.md  Internal account lookup setup
 mcp/zutobi-user-lookup/        Read-only TypeScript MCP server
+vendor/                        Pinned official vendor repositories
 tests/                          Anonymized forward-testing inputs and expectations
 dist/                           Generated exports, ignored by Git
 ```
