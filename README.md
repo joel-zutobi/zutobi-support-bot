@@ -2,7 +2,7 @@
 
 This repository maintains the `zutobi-support` skill. It classifies messages in the `support@zutobi.com` Gmail inbox and can create reply drafts in Zutobi's support voice.
 
-The original April 2026 export is preserved in the first commit. The maintained source is [skills/zutobi-support/SKILL.md](skills/zutobi-support/SKILL.md).
+The original April 2026 export is preserved in the first commit. The maintained skill starts at [skills/zutobi-support/SKILL.md](skills/zutobi-support/SKILL.md), with canonical replies under `skills/zutobi-support/references/`.
 
 ## Safety model
 
@@ -19,6 +19,14 @@ Run this from PowerShell at the repository root:
 ```
 
 The script validates key safety rules and writes `dist/zutobi-support.skill`. It uses fixed ZIP timestamps and sorted paths, so unchanged source produces the same archive hash.
+
+Run the full local validation after changing the skill:
+
+```powershell
+.\scripts\validate.ps1
+```
+
+This packages the skill, checks its fixed safety rules, validates the anonymized behavior case set, and confirms coverage for all 16 categories. The cases are inputs for fresh-agent forward testing. They do not claim that classification behavior is correct until those runs pass.
 
 ## Install on another computer
 
@@ -42,9 +50,12 @@ Follow [docs/setup-gmail-mcp.md](docs/setup-gmail-mcp.md). Start with the read-o
 
 ```text
 skills/zutobi-support/SKILL.md  Maintained skill source
+skills/zutobi-support/references/  Ordinary and operator-approved templates
 scripts/package.ps1            Deterministic packager and safety checks
+scripts/validate.ps1           Structural checks for behavioral cases
 scripts/setup.ps1              Build the pinned Gmail server and local artifacts
 docs/setup-gmail-mcp.md        OAuth, server registration, and rollout runbook
+tests/                          Anonymized forward-testing inputs and expectations
 vendor/gmail-mcp-server/        Pinned Git submodule, source only
 dist/                           Generated exports, ignored by Git
 ```

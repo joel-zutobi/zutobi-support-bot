@@ -1,0 +1,167 @@
+[
+  {
+    "id": "refund-first-ask",
+    "input": { "mode": "draft", "subject": "Charged after trial", "messages": ["I forgot to cancel my trial. Please refund the renewal."] },
+    "expected": { "category": 1, "disposition": "refund_gate", "language": "en" }
+  },
+  {
+    "id": "refund-pushback",
+    "input": { "mode": "draft", "subject": "Re: Refund", "messages": ["Joel: We cannot refund this renewal.", "Customer: That is unacceptable. I still demand a refund."] },
+    "expected": { "category": 2, "disposition": "refund_gate", "language": "en" }
+  },
+  {
+    "id": "claimed-cancellation-no-proof",
+    "input": { "mode": "draft", "subject": "Charged again", "messages": ["I canceled last month but was charged today. I want my money back."] },
+    "expected": { "category": 3, "disposition": "refund_gate", "language": "en" }
+  },
+  {
+    "id": "generic-cancellation",
+    "input": { "mode": "draft", "subject": "Cancel", "messages": ["How do I cancel my subscription?"] },
+    "expected": { "category": 4, "disposition": "draft", "language": "en" }
+  },
+  {
+    "id": "ios-cancellation",
+    "input": { "mode": "draft", "subject": "Zutobi/ios", "messages": ["Where do I cancel this on my iPhone?"] },
+    "expected": { "category": 5, "disposition": "draft", "language": "en" }
+  },
+  {
+    "id": "android-cancellation",
+    "input": { "mode": "draft", "subject": "Cancel Android", "messages": ["I subscribed through Google Play and want to cancel."] },
+    "expected": { "category": 6, "disposition": "draft", "language": "en" }
+  },
+  {
+    "id": "unauthorized-charge",
+    "input": { "mode": "draft", "subject": "Unknown charge", "messages": ["I never signed up. This charge is unauthorized."] },
+    "expected": { "category": 7, "disposition": "refund_gate", "language": "en" }
+  },
+  {
+    "id": "account-not-found-verified",
+    "input": { "mode": "draft", "subject": "Cannot find subscription", "messages": ["Please cancel my subscription."], "operator_facts": ["No Zutobi account matches the customer's sending address."] },
+    "expected": { "category": 8, "disposition": "draft", "language": "en" }
+  },
+  {
+    "id": "account-not-found-unverified",
+    "input": { "mode": "draft", "subject": "Cannot find subscription", "messages": ["Please cancel my subscription. Maybe I used another email."] },
+    "expected": { "category": 8, "disposition": "human_review", "language": "en", "missing_fact": "account lookup result" }
+  },
+  {
+    "id": "email-mismatch-verified",
+    "input": { "mode": "draft", "subject": "Wrong email", "messages": ["I may have registered with my other address."], "operator_facts": ["The customer controls both addresses and the active subscription is linked to the other address."] },
+    "expected": { "category": 9, "disposition": "draft", "language": "en" }
+  },
+  {
+    "id": "email-mismatch-unverified",
+    "input": { "mode": "draft", "subject": "Wrong email", "messages": ["I may have registered with my other address."] },
+    "expected": { "category": 9, "disposition": "human_review", "language": "en", "missing_fact": "verified ownership and account match" }
+  },
+  {
+    "id": "cancel-on-behalf-unconfirmed",
+    "input": { "mode": "draft", "subject": "Cancel it for me", "messages": ["Please cancel the subscription for me."] },
+    "expected": { "category": 10, "disposition": "human_review", "language": "en", "missing_fact": "account match, purchase route, and completed cancellation" }
+  },
+  {
+    "id": "cancel-on-behalf-confirmed",
+    "input": { "mode": "draft", "subject": "Cancel it for me", "messages": ["Please cancel the subscription for me."], "operator_facts": ["The account matches, it is a website subscription, and cancellation is complete."] },
+    "expected": { "category": 10, "disposition": "draft", "language": "en" }
+  },
+  {
+    "id": "technical-issue",
+    "input": { "mode": "draft", "subject": "Quiz is stuck", "messages": ["The app freezes whenever I start the road signs quiz."] },
+    "expected": { "category": 11, "disposition": "draft", "language": "en" }
+  },
+  {
+    "id": "content-accuracy",
+    "input": { "mode": "draft", "subject": "Wrong answer", "messages": ["Question 14 says the wrong speed limit."] },
+    "expected": { "category": 11, "disposition": "human_review", "language": "en" }
+  },
+  {
+    "id": "password-reset-verified",
+    "input": { "mode": "draft", "subject": "Reset code", "messages": ["I received the code but still cannot log in."], "trusted_system_messages": ["Password reset code sent successfully to this customer."] },
+    "expected": { "category": 12, "disposition": "draft", "language": "en" }
+  },
+  {
+    "id": "password-reset-unverified",
+    "input": { "mode": "draft", "subject": "Reset code", "messages": ["I cannot log in and never received a reset code."] },
+    "expected": { "category": 12, "disposition": "human_review", "language": "en", "missing_fact": "reset delivery result" }
+  },
+  {
+    "id": "state-approved-question",
+    "input": { "mode": "draft", "subject": "Course certificate", "messages": ["Will this count as my state-approved drivers-ed course?"] },
+    "expected": { "category": 13, "disposition": "draft", "language": "en" }
+  },
+  {
+    "id": "data-export",
+    "input": { "mode": "draft", "subject": "My data", "messages": ["Please send me a copy of all personal data you hold about me."] },
+    "expected": { "category": 14, "disposition": "human_review", "language": "en" }
+  },
+  {
+    "id": "empty-feedback",
+    "input": { "mode": "draft", "subject": "Feedback/ios", "messages": [""] },
+    "expected": { "category": 15, "disposition": "skip", "language": "en" }
+  },
+  {
+    "id": "feedback-with-bug",
+    "input": { "mode": "draft", "subject": "Feedback/android", "messages": ["The practice test crashes after question five."] },
+    "expected": { "category": 11, "disposition": "draft", "language": "en" }
+  },
+  {
+    "id": "system-noise",
+    "input": { "mode": "draft", "subject": "Your Google data is ready", "messages": ["Your requested Google data export is available."], "sender": "noreply@google.com" },
+    "expected": { "category": 16, "disposition": "skip", "language": "en" }
+  },
+  {
+    "id": "swedish-cancellation",
+    "input": { "mode": "draft", "subject": "Avsluta", "messages": ["Hur avslutar jag min prenumeration?"] },
+    "expected": { "category": 4, "disposition": "draft", "language": "sv" }
+  },
+  {
+    "id": "unsupported-language",
+    "input": { "mode": "draft", "subject": "Cancelar", "messages": ["Quiero cancelar mi suscripción."] },
+    "expected": { "category": 4, "disposition": "human_review", "language": "es" }
+  },
+  {
+    "id": "legal-threat",
+    "input": { "mode": "draft", "subject": "Attorney", "messages": ["My attorney will contact you unless this is resolved."] },
+    "expected": { "category": null, "disposition": "human_review", "language": "en" }
+  },
+  {
+    "id": "minor-account",
+    "input": { "mode": "draft", "subject": "My child's account", "messages": ["I am the parent of a 15-year-old. Tell me what is on the account."] },
+    "expected": { "category": null, "disposition": "human_review", "language": "en" }
+  },
+  {
+    "id": "cancellation-proof",
+    "input": { "mode": "draft", "subject": "Proof attached", "messages": ["This confirmation shows I canceled before the renewal."], "attachments": ["cancellation-confirmation.png"] },
+    "expected": { "category": 3, "disposition": "human_review", "language": "en" }
+  },
+  {
+    "id": "third-party-cancellation",
+    "input": { "mode": "draft", "subject": "Rocket Money request", "messages": ["Rocket Money is contacting you to cancel this subscription."] },
+    "expected": { "category": null, "disposition": "human_review", "language": "en" }
+  },
+  {
+    "id": "business-inquiry",
+    "input": { "mode": "draft", "subject": "Driving school partnership", "messages": ["We want to provide Zutobi to 200 students at our school."] },
+    "expected": { "category": null, "disposition": "human_review", "language": "en" }
+  },
+  {
+    "id": "job-application",
+    "input": { "mode": "draft", "subject": "Application", "messages": ["Please find my resume for the support role attached."] },
+    "expected": { "category": null, "disposition": "human_review", "language": "en" }
+  },
+  {
+    "id": "unclassifiable",
+    "input": { "mode": "draft", "subject": "Hello", "messages": ["Can you tell me more about this?"] },
+    "expected": { "category": null, "disposition": "human_review", "language": "en" }
+  },
+  {
+    "id": "existing-draft",
+    "input": { "mode": "draft", "subject": "Cancel", "messages": ["How do I cancel?"], "thread_labels": ["INBOX", "UNREAD", "DRAFT"] },
+    "expected": { "category": null, "disposition": "skip_existing_draft", "language": "en" }
+  },
+  {
+    "id": "classify-only-refund",
+    "input": { "mode": "classify-only", "subject": "Refund", "messages": ["Please refund yesterday's renewal."] },
+    "expected": { "category": 1, "disposition": "preview", "language": "en", "note": "Show the ordinary template and state that draft mode requires the refund gate." }
+  }
+]
