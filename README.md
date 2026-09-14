@@ -4,6 +4,8 @@ This repository maintains the `zutobi-support` skill. It classifies messages in 
 
 The original April 2026 export is preserved in the first commit. The maintained skill starts at [skills/zutobi-support/SKILL.md](skills/zutobi-support/SKILL.md), with canonical replies under `skills/zutobi-support/references/`.
 
+The repository also contains a local, read-only TypeScript MCP server for verified Zutobi account and subscription lookup. It calls the fixed Zutobi admin user endpoint by exact email or numeric user ID. See [docs/setup-zutobi-user-lookup-mcp.md](docs/setup-zutobi-user-lookup-mcp.md).
+
 ## Safety model
 
 The skill creates drafts only. It uses both `list_drafts` and the `DRAFT` message label to skip threads that already have a draft. Refund language requires an explicit operator decision for each thread.
@@ -42,6 +44,8 @@ Set-Location '.\Zutobi Support'
 
 The setup script validates the source and builds `dist/zutobi-support.skill`. The account owner must separately connect Google's remote Gmail MCP server to Claude and authorize Gmail access. Follow the runbook linked below. An agent working in this repository should read `AGENTS.md` and the runbook before changing or installing the integration. Claude Code reads `CLAUDE.md`, which points to the shared agent guidance.
 
+The setup script also installs, builds, and tests the local user lookup MCP when Node.js is available. Its authentication token remains a separately provisioned secret.
+
 ## Set up Gmail
 
 Follow [docs/setup-gmail-mcp.md](docs/setup-gmail-mcp.md). Start with the read-only dry run before authorizing draft creation.
@@ -55,6 +59,8 @@ scripts/package.ps1            Deterministic packager and safety checks
 scripts/validate.ps1           Structural checks for behavioral cases
 scripts/setup.ps1              Validate and package the skill
 docs/setup-gmail-mcp.md        Official Gmail MCP setup and rollout runbook
+docs/setup-zutobi-user-lookup-mcp.md  Internal account lookup setup
+mcp/zutobi-user-lookup/        Read-only TypeScript MCP server
 tests/                          Anonymized forward-testing inputs and expectations
 dist/                           Generated exports, ignored by Git
 ```
