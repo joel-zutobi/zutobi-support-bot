@@ -4,15 +4,6 @@ param()
 $ErrorActionPreference = 'Stop'
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$safeRepoRoot = $repoRoot.Replace('\', '/')
-
-if ((Test-Path (Join-Path $repoRoot '.git')) -and (Get-Command git -ErrorAction SilentlyContinue)) {
-    git -c "safe.directory=$safeRepoRoot" -C $repoRoot submodule update --init --recursive
-    if ($LASTEXITCODE -ne 0) {
-        throw 'Git submodule setup failed.'
-    }
-}
-
 & (Join-Path $PSScriptRoot 'validate.ps1')
 
 $lookupMcp = Join-Path $repoRoot 'mcp\zutobi-user-lookup'
