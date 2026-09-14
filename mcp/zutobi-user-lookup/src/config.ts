@@ -29,7 +29,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): Server
 
   return {
     token,
-    timeoutMs: readPositiveInteger(environment, "ZUTOBI_LOOKUP_TIMEOUT_MS", 8_000),
+    timeoutMs: readPositiveInteger(environment, "ZUTOBI_LOOKUP_TIMEOUT_MS", 60_000),
     maxResponseBytes: readPositiveInteger(
       environment,
       "ZUTOBI_LOOKUP_MAX_RESPONSE_BYTES",

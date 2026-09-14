@@ -65,7 +65,7 @@ The host process must inherit `ZUTOBI_ADMIN_AUTH_TOKEN`. Prefer the operating sy
 
 Optional environment variables:
 
-- `ZUTOBI_LOOKUP_TIMEOUT_MS`, default `8000`
+- `ZUTOBI_LOOKUP_TIMEOUT_MS`, default `60000`
 - `ZUTOBI_LOOKUP_MAX_RESPONSE_BYTES`, default `1048576`
 
 ## Rotate or revoke the token

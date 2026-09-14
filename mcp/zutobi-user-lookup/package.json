@@ -13,7 +13,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/src/index.js",
-    "test": "npm run build && node --test dist/test/lookup.test.js dist/test/server.test.js"
+    "test": "npm run build && node --test dist/test/config.test.js dist/test/lookup.test.js dist/test/server.test.js"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "^2.0.0",

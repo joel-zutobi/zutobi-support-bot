@@ -9,7 +9,7 @@ import {
 } from "./contracts.js";
 
 const ENDPOINT = "https://webapi.zutobi.com/api/v3/admin/user";
-const DEFAULT_TIMEOUT_MS = 8_000;
+const DEFAULT_TIMEOUT_MS = 60_000;
 const DEFAULT_MAX_RESPONSE_BYTES = 1_048_576;
 
 export type LookupErrorCode =
